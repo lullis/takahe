@@ -2,7 +2,7 @@ from django.db import models
 
 from users.models import Domain, Identity
 
-from . import choices
+from . import choices, types
 
 
 class Instance(Domain):
@@ -33,6 +33,10 @@ class Person(Identity):
     matrix_user_id = models.TextField(blank=True, null=True)
     bot_account = models.BooleanField(default=False)
     ban_expires = models.DateTimeField(blank=True, null=True)
+
+    @property
+    def instance_id(self) -> types.InstanceId:
+        return types.InstanceId(hash(str(self.domain)))
 
     @property
     def is_deleted(self) -> bool:

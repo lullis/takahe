@@ -1,78 +1,9 @@
 from datetime import datetime
-from typing import Literal, NewType
+from typing import Literal
 
 from pydantic import BaseModel, Extra, Field
 
-SiteId = NewType("SiteId", int)
-LocalSiteId = NewType("LocalSiteId", int)
-InstanceId = NewType("InstanceId", int)
-PersonId = NewType("PersonId", int)
-UserId = NewType("UserId", int)
-LocalUserId = NewType("LocalUserId", int)
-CommunityId = NewType("CommunityId", int)
-PostId = NewType("PostId", int)
-CustomEmojiId = NewType("CustomEmojiId", int)
-CommentId = NewType("CommentId", int)
-CommentReplyId = NewType("CommentReplyId", int)
-LanguageId = NewType("LanguageId", int)
-PostReportId = NewType("PostReportId", int)
-ImageUrl = NewType("ImageUrl", str)
-ActorId = NewType("ActorId", str)
-ActivityId = NewType("ActivityId", int)
-ActivityPubInbox = NewType("ActivityPubInbox", str)
-PaginationCursor = NewType("PaginationCursor", str)
-PersonMentionId = NewType("PersonMentionId", int)
-PrivateMessageReportId = NewType("PrivateMessageReportId", int)
-PrivateMessageId = NewType("PrivateMessageId", int)
-CommentReportId = NewType("CommentReportId", int)
-
-# Django models want to use TextChoices, Pydantic models use Enums.
-LISTING_TYPES = Literal["All", "Local", "Subscribed", "ModeratorView"]
-REGISTRATION_MODE_OPTIONS = Literal["Closed", "RequireApplication", "Open"]
-SORT_TYPE_OPTIONS = Literal[
-    "Active",
-    "Hot",
-    "New",
-    "Old",
-    "TopDay",
-    "TopWeek",
-    "TopMonth",
-    "TopYear",
-    "TopAll",
-    "MostComments",
-    "NewComments",
-    "TopHour",
-    "TopSixHour",
-    "TopTwelveHour",
-    "TopThreeMonths",
-    "TopSixMonths",
-    "TopNineMonths",
-    "Controversial",
-    "Scaled",
-]
-POST_LISTING_MODE_OPTIONS = Literal["List", "Card", "SmallCard"]
-MOD_LOG_ACTION_TYPES = Literal[
-    "All",
-    "ModRemovePost",
-    "ModLockPost",
-    "ModFeaturePost",
-    "ModRemoveComment",
-    "ModRemoveCommunity",
-    "ModBanFromCommunity",
-    "ModAddCommunity",
-    "ModTransferCommunity",
-    "ModAdd",
-    "ModBan",
-    "ModHideCommunity",
-    "AdminPurgePerson",
-    "AdminPurgeCommunity",
-    "AdminPurgePost",
-    "AdminPurgeComment",
-]
-SEARCH_TYPES = Literal["All", "Comments", "Posts", "Communities", "Users", "Url"]
-SUBSCRIPTION_TYPES = Literal["Subscribed", "NotSubscribed", "Pending"]
-POST_FEATURE_TYPES = Literal["Local", "Community"]
-COMMENT_SORT_TYPES = Literal["Hot", "Top", "New", "Old", "Controversial"]
+from . import types
 
 
 class ErrorResponseRegistration(BaseModel):
@@ -102,22 +33,18 @@ class ErrorResponseLogin(BaseModel):
 class IdentityModelMixin:
     name: str
     published: datetime = Field(..., alias="created")
-    inbox_url: ActivityPubInbox = Field(..., alias="inbox_uri")
-    actor_id: ActorId = Field(..., alias="actor_uri")
-    domain: str
-
-    @property
-    def instance_id(self) -> InstanceId:
-        return InstanceId(hash(str(self.domain)))
+    inbox_url: types.ActivityPubInbox = Field(..., alias="inbox_uri")
+    actor_id: types.ActorId = Field(..., alias="actor_uri")
+    instance_id: types.InstanceId
 
 
 class Site(BaseModel, IdentityModelMixin):
-    id: SiteId
+    id: types.SiteId
     sidebar: str | None
 
     last_refreshed_at: datetime | None = Field(..., alias="fetched")
-    icon: ImageUrl | None = Field(..., alias="icon_uri")
-    banner: ImageUrl | None = Field(..., alias="image_uri")
+    icon: types.ImageUrl | None = Field(..., alias="icon_uri")
+    banner: types.ImageUrl | None = Field(..., alias="image_uri")
     description: str | None = Field(..., alias="summary")
     public_key: str
 
@@ -127,7 +54,7 @@ class Site(BaseModel, IdentityModelMixin):
 
 
 class Person(BaseModel, IdentityModelMixin):
-    id: PersonId
+    id: types.PersonId
     banned: bool
     local: bool
     bot_account: bool
@@ -143,8 +70,8 @@ class LocalSite(BaseModel):
         extra = Extra.forbid
         orm_mode = True
 
-    id: SiteId
-    site_id: SiteId
+    id: types.SiteId
+    site_id: types.SiteId
     site_setup: bool
     enable_downvotes: bool
     enable_nsfw: bool
@@ -153,7 +80,7 @@ class LocalSite(BaseModel):
     application_question: str | None
     private_instance: bool
     default_theme: str
-    default_post_listing_type: LISTING_TYPES
+    default_post_listing_type: types.LISTING_TYPES
     legal_information: str | None
     hide_modlog_mod_names: bool
     application_email_admins: bool
@@ -164,7 +91,7 @@ class LocalSite(BaseModel):
     captcha_difficulty: str
     published: datetime
     updated: datetime | None
-    registration_mode: REGISTRATION_MODE_OPTIONS
+    registration_mode: types.REGISTRATION_MODE_OPTIONS
     reports_email_admins: bool
     federation_signed_fetch: bool
 
@@ -174,7 +101,7 @@ class LocalSiteRateLimit(BaseModel):
         extra = Extra.forbid
         orm_mode = True
 
-    local_site_id: LocalSiteId
+    local_site_id: types.LocalSiteId
     message: int
     message_per_second: int
     post: int
@@ -198,7 +125,7 @@ class SiteAggregates(BaseModel):
         extra = Extra.forbid
         orm_mode = True
 
-    site_id: SiteId
+    site_id: types.SiteId
     users: int
     posts: int
     comments: int
@@ -224,7 +151,7 @@ class PersonAggregates(BaseModel):
         extra = Extra.forbid
         orm_mode = True
 
-    person_id: PersonId
+    person_id: types.PersonId
     post_count: int
     comment_count: int
 
@@ -242,13 +169,13 @@ class LocalUser(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: LocalUserId
-    person_id: PersonId
+    id: types.LocalUserId
+    person_id: types.PersonId
     email: str | None
     show_nsfw: bool
     theme: str
-    default_sort_type: SORT_TYPE_OPTIONS
-    default_listing_type: LISTING_TYPES
+    default_sort_type: types.SORT_TYPE_OPTIONS
+    default_listing_type: types.LISTING_TYPES
     interface_language: str
     show_avatars: bool
     send_notifications_to_email: bool
@@ -262,7 +189,7 @@ class LocalUser(BaseModel):
     auto_expand: bool
     infinite_scroll_enabled: bool
     admin: bool
-    post_listing_mode: POST_LISTING_MODE_OPTIONS
+    post_listing_mode: types.POST_LISTING_MODE_OPTIONS
     totp_2fa_enabled: bool
     enable_keyboard_navigation: bool
     enable_animated_images: bool
@@ -282,7 +209,7 @@ class Community(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: CommunityId
+    id: types.CommunityId
     name: str
     title: str
     description: str | None
@@ -291,13 +218,13 @@ class Community(BaseModel):
     updated: datetime | None
     deleted: bool
     nsfw: bool
-    actor_id: ActorId
+    actor_id: types.ActorId
     local: bool
     icon: str | None
     banner: str | None
     hidden: bool
     posting_restricted_to_mods: bool
-    instance_id: InstanceId
+    instance_id: types.InstanceId
 
 
 class CommunityFollowerView(BaseModel):
@@ -328,7 +255,7 @@ class Instance(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: InstanceId
+    id: types.InstanceId
     domain: str
     published: datetime
     updated: datetime | None
@@ -363,14 +290,14 @@ class MyUserInfo(BaseModel):
     community_blocks: list[CommunityBlockView]
     instance_blocks: list[InstanceBlockView]
     person_blocks: list[PersonBlockView]
-    discussion_languages: list[LanguageId]
+    discussion_languages: list[types.LanguageId]
 
 
 class Language(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: LanguageId
+    id: types.LanguageId
     code: str
     name: str
 
@@ -380,7 +307,7 @@ class Tagline(BaseModel):
         extra = Extra.forbid
 
     id: int
-    local_site_id: LocalSiteId
+    local_site_id: types.LocalSiteId
     content: str
     published: datetime
     updated: datetime | None
@@ -390,8 +317,8 @@ class CustomEmoji(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: CustomEmojiId
-    local_site_id: LocalSiteId
+    id: types.CustomEmojiId
+    local_site_id: types.LocalSiteId
     shortcode: str
     image_url: str
     alt_text: str
@@ -404,7 +331,7 @@ class CustomEmojiKeyword(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    custom_emoji_id: CustomEmojiId
+    custom_emoji_id: types.CustomEmojiId
     keyword: str
 
 
@@ -425,7 +352,7 @@ class GetSiteResponse(BaseModel):
     version: str | None
     my_user: MyUserInfo | None
     all_languages: list[Language]
-    discussion_languages: list[LanguageId]
+    discussion_languages: list[types.LanguageId]
     taglines: list[Tagline]
     custom_emojis: list[CustomEmojiView]
 
@@ -446,11 +373,11 @@ class EditSite(BaseModel):
     application_question: str | None
     private_instance: bool | None
     default_theme: str | None
-    default_post_listing_type: LISTING_TYPES | None
+    default_post_listing_type: types.LISTING_TYPES | None
     legal_information: str | None
     application_email_admins: bool | None
     hide_modlog_mod_names: bool | None
-    discussion_languages: list[LanguageId] | None
+    discussion_languages: list[types.LanguageId] | None
     slur_filter_regex: str | None
     actor_name_max_length: int | None
     rate_limit_message: int | None
@@ -472,7 +399,7 @@ class EditSite(BaseModel):
     allowed_instances: list[str] | None
     blocked_instances: list[str] | None
     taglines: list[str] | None
-    registration_mode: REGISTRATION_MODE_OPTIONS | None
+    registration_mode: types.REGISTRATION_MODE_OPTIONS | None
     reports_email_admins: bool | None
 
 
@@ -500,11 +427,11 @@ class CreateSite(BaseModel):
     application_question: str | None
     private_instance: bool | None
     default_theme: str | None
-    default_post_listing_type: LISTING_TYPES | None
+    default_post_listing_type: types.LISTING_TYPES | None
     legal_information: str | None
     application_email_admins: bool | None
     hide_modlog_mod_names: bool | None
-    discussion_languages: list[LanguageId] | None
+    discussion_languages: list[types.LanguageId] | None
     slur_filter_regex: str | None
     actor_name_max_length: int | None
     rate_limit_message: int | None
@@ -526,19 +453,19 @@ class CreateSite(BaseModel):
     allowed_instances: list[str] | None
     blocked_instances: list[str] | None
     taglines: list[str] | None
-    registration_mode: REGISTRATION_MODE_OPTIONS | None
+    registration_mode: types.REGISTRATION_MODE_OPTIONS | None
 
 
 class GetModlog(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    mod_person_id: PersonId | None
-    community_id: CommunityId | None
+    mod_person_id: types.PersonId | None
+    community_id: types.CommunityId | None
     page: int | None
     limit: int | None
-    type_: MOD_LOG_ACTION_TYPES | None
-    other_person_id: PersonId | None
+    type_: types.MOD_LOG_ACTION_TYPES | None
+    other_person_id: types.PersonId | None
 
 
 class ModRemovePost(BaseModel):
@@ -546,8 +473,8 @@ class ModRemovePost(BaseModel):
         extra = Extra.forbid
 
     id: int
-    mod_person_id: PersonId
-    post_id: PostId
+    mod_person_id: types.PersonId
+    post_id: types.PostId
     reason: str | None
     removed: bool
     when_: str
@@ -557,12 +484,12 @@ class Post(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: PostId
+    id: types.PostId
     name: str
     url: str | None
     body: str | None
-    creator_id: PersonId
-    community_id: CommunityId
+    creator_id: types.PersonId
+    community_id: types.CommunityId
     removed: bool
     locked: bool
     published: datetime
@@ -575,7 +502,7 @@ class Post(BaseModel):
     ap_id: str
     local: bool
     embed_video_url: str | None
-    language_id: LanguageId
+    language_id: types.LanguageId
     featured_community: bool
     featured_local: bool
 
@@ -595,8 +522,8 @@ class ModLockPost(BaseModel):
         extra = Extra.forbid
 
     id: int
-    mod_person_id: PersonId
-    post_id: PostId
+    mod_person_id: types.PersonId
+    post_id: types.PostId
     locked: bool
     when_: str
 
@@ -616,8 +543,8 @@ class ModFeaturePost(BaseModel):
         extra = Extra.forbid
 
     id: int
-    mod_person_id: PersonId
-    post_id: PostId
+    mod_person_id: types.PersonId
+    post_id: types.PostId
     featured: bool
     when_: str
     is_featured_community: bool
@@ -638,8 +565,8 @@ class ModRemoveComment(BaseModel):
         extra = Extra.forbid
 
     id: int
-    mod_person_id: PersonId
-    comment_id: CommentId
+    mod_person_id: types.PersonId
+    comment_id: types.CommentId
     reason: str | None
     removed: bool
     when_: str
@@ -649,9 +576,9 @@ class Comment(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: CommentId
-    creator_id: PersonId
-    post_id: PostId
+    id: types.CommentId
+    creator_id: types.PersonId
+    post_id: types.PostId
     content: str
     removed: bool
     published: datetime
@@ -661,7 +588,7 @@ class Comment(BaseModel):
     local: bool
     path: str
     distinguished: bool
-    language_id: LanguageId
+    language_id: types.LanguageId
 
 
 class ModRemoveCommentView(BaseModel):
@@ -681,8 +608,8 @@ class ModRemoveCommunity(BaseModel):
         extra = Extra.forbid
 
     id: int
-    mod_person_id: PersonId
-    community_id: CommunityId
+    mod_person_id: types.PersonId
+    community_id: types.CommunityId
     reason: str | None
     removed: bool
     when_: str
@@ -702,9 +629,9 @@ class ModBanFromCommunity(BaseModel):
         extra = Extra.forbid
 
     id: int
-    mod_person_id: PersonId
-    other_person_id: PersonId
-    community_id: CommunityId
+    mod_person_id: types.PersonId
+    other_person_id: types.PersonId
+    community_id: types.CommunityId
     reason: str | None
     banned: bool
     expires: str | None
@@ -726,8 +653,8 @@ class ModBan(BaseModel):
         extra = Extra.forbid
 
     id: int
-    mod_person_id: PersonId
-    other_person_id: PersonId
+    mod_person_id: types.PersonId
+    other_person_id: types.PersonId
     reason: str | None
     banned: bool
     expires: str | None
@@ -748,9 +675,9 @@ class ModAddCommunity(BaseModel):
         extra = Extra.forbid
 
     id: int
-    mod_person_id: PersonId
-    other_person_id: PersonId
-    community_id: CommunityId
+    mod_person_id: types.PersonId
+    other_person_id: types.PersonId
+    community_id: types.CommunityId
     removed: bool
     when_: str
 
@@ -770,9 +697,9 @@ class ModTransferCommunity(BaseModel):
         extra = Extra.forbid
 
     id: int
-    mod_person_id: PersonId
-    other_person_id: PersonId
-    community_id: CommunityId
+    mod_person_id: types.PersonId
+    other_person_id: types.PersonId
+    community_id: types.CommunityId
     when_: str
 
 
@@ -791,8 +718,8 @@ class ModAdd(BaseModel):
         extra = Extra.forbid
 
     id: int
-    mod_person_id: PersonId
-    other_person_id: PersonId
+    mod_person_id: types.PersonId
+    other_person_id: types.PersonId
     removed: bool
     when_: str
 
@@ -811,7 +738,7 @@ class AdminPurgePerson(BaseModel):
         extra = Extra.forbid
 
     id: int
-    admin_person_id: PersonId
+    admin_person_id: types.PersonId
     reason: str | None
     when_: str
 
@@ -829,7 +756,7 @@ class AdminPurgeCommunity(BaseModel):
         extra = Extra.forbid
 
     id: int
-    admin_person_id: PersonId
+    admin_person_id: types.PersonId
     reason: str | None
     when_: str
 
@@ -847,8 +774,8 @@ class AdminPurgePost(BaseModel):
         extra = Extra.forbid
 
     id: int
-    admin_person_id: PersonId
-    community_id: CommunityId
+    admin_person_id: types.PersonId
+    community_id: types.CommunityId
     reason: str | None
     when_: str
 
@@ -867,8 +794,8 @@ class AdminPurgeComment(BaseModel):
         extra = Extra.forbid
 
     id: int
-    admin_person_id: PersonId
-    post_id: PostId
+    admin_person_id: types.PersonId
+    post_id: types.PostId
     reason: str | None
     when_: str
 
@@ -887,8 +814,8 @@ class ModHideCommunity(BaseModel):
         extra = Extra.forbid
 
     id: int
-    community_id: CommunityId
-    mod_person_id: PersonId
+    community_id: types.CommunityId
+    mod_person_id: types.PersonId
     when_: str
     reason: str | None
     hidden: bool
@@ -929,12 +856,12 @@ class Search(BaseModel):
         extra = Extra.forbid
 
     q: str
-    community_id: CommunityId | None
+    community_id: types.CommunityId | None
     community_name: str | None
-    creator_id: PersonId | None
-    type_: SEARCH_TYPES | None
-    sort: SORT_TYPE_OPTIONS | None
-    listing_type: LISTING_TYPES | None
+    creator_id: types.PersonId | None
+    type_: types.SEARCH_TYPES | None
+    sort: types.SORT_TYPE_OPTIONS | None
+    listing_type: types.LISTING_TYPES | None
     page: int | None
     limit: int | None
 
@@ -943,7 +870,7 @@ class CommentAggregates(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    comment_id: CommentId
+    comment_id: types.CommentId
     score: int
     upvotes: int
     downvotes: int
@@ -963,7 +890,7 @@ class CommentView(BaseModel):
     creator_banned_from_community: bool
     creator_is_moderator: bool
     creator_is_admin: bool
-    subscribed: SUBSCRIPTION_TYPES
+    subscribed: types.SUBSCRIPTION_TYPES
     saved: bool
     creator_blocked: bool
     my_vote: int | None
@@ -973,7 +900,7 @@ class PostAggregates(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    post_id: PostId
+    post_id: types.PostId
     comments: int
     score: int
     upvotes: int
@@ -993,7 +920,7 @@ class PostView(BaseModel):
     creator_is_moderator: bool
     creator_is_admin: bool
     counts: PostAggregates
-    subscribed: SUBSCRIPTION_TYPES
+    subscribed: types.SUBSCRIPTION_TYPES
     saved: bool
     read: bool
     creator_blocked: bool
@@ -1005,7 +932,7 @@ class CommunityAggregates(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    community_id: CommunityId
+    community_id: types.CommunityId
     subscribers: int
     posts: int
     comments: int
@@ -1022,7 +949,7 @@ class CommunityView(BaseModel):
         extra = Extra.forbid
 
     community: Community
-    subscribed: SUBSCRIPTION_TYPES
+    subscribed: types.SUBSCRIPTION_TYPES
     blocked: bool
     counts: CommunityAggregates
 
@@ -1031,7 +958,7 @@ class SearchResponse(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    type_: SEARCH_TYPES
+    type_: types.SEARCH_TYPES
     comments: list[CommentView]
     posts: list[PostView]
     communities: list[CommunityView]
@@ -1059,7 +986,7 @@ class GetCommunity(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: CommunityId | None
+    id: types.CommunityId | None
     name: str | None
 
 
@@ -1070,21 +997,21 @@ class GetCommunityResponse(BaseModel):
     community_view: CommunityView
     site: Site | None
     moderators: list[CommunityModeratorView]
-    discussion_languages: list[LanguageId]
+    discussion_languages: list[types.LanguageId]
 
 
 class EditCommunity(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    community_id: CommunityId
+    community_id: types.CommunityId
     title: str | None
     description: str | None
     icon: str | None
     banner: str | None
     nsfw: bool | None
     posting_restricted_to_mods: bool | None
-    discussion_languages: list[LanguageId] | None
+    discussion_languages: list[types.LanguageId] | None
     local_only: bool | None
 
 
@@ -1093,7 +1020,7 @@ class CommunityResponse(BaseModel):
         extra = Extra.forbid
 
     community_view: CommunityView
-    discussion_languages: list[LanguageId]
+    discussion_languages: list[types.LanguageId]
 
 
 class CreateCommunity(BaseModel):
@@ -1107,7 +1034,7 @@ class CreateCommunity(BaseModel):
     banner: str | None
     nsfw: bool | None
     posting_restricted_to_mods: bool | None
-    discussion_languages: list[LanguageId] | None
+    discussion_languages: list[types.LanguageId] | None
     local_only: bool | None
 
 
@@ -1115,7 +1042,7 @@ class HideCommunity(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    community_id: CommunityId
+    community_id: types.CommunityId
     hidden: bool
     reason: str | None
 
@@ -1124,8 +1051,8 @@ class ListCommunities(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    type_: LISTING_TYPES | None
-    sort: SORT_TYPE_OPTIONS | None
+    type_: types.LISTING_TYPES | None
+    sort: types.SORT_TYPE_OPTIONS | None
     show_nsfw: bool | None
     page: int | None
     limit: int | None
@@ -1142,7 +1069,7 @@ class FollowCommunity(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    community_id: CommunityId
+    community_id: types.CommunityId
     follow: bool
 
 
@@ -1150,7 +1077,7 @@ class BlockCommunity(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    community_id: CommunityId
+    community_id: types.CommunityId
     block: bool
 
 
@@ -1166,7 +1093,7 @@ class DeleteCommunity(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    community_id: CommunityId
+    community_id: types.CommunityId
     deleted: bool
 
 
@@ -1174,7 +1101,7 @@ class RemoveCommunity(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    community_id: CommunityId
+    community_id: types.CommunityId
     removed: bool
     reason: str | None
 
@@ -1183,16 +1110,16 @@ class TransferCommunity(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    community_id: CommunityId
-    person_id: PersonId
+    community_id: types.CommunityId
+    person_id: types.PersonId
 
 
 class BanFromCommunity(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    community_id: CommunityId
-    person_id: PersonId
+    community_id: types.CommunityId
+    person_id: types.PersonId
     ban: bool
     remove_data: bool | None
     reason: str | None
@@ -1211,8 +1138,8 @@ class AddModToCommunity(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    community_id: CommunityId
-    person_id: PersonId
+    community_id: types.CommunityId
+    person_id: types.PersonId
     added: bool
 
 
@@ -1227,8 +1154,8 @@ class ReadableFederationState(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    instance_id: InstanceId
-    last_successful_id: ActivityId | None
+    instance_id: types.InstanceId
+    last_successful_id: types.ActivityId | None
     last_successful_published_time: str | None
     fail_count: int
     last_retry: str | None
@@ -1239,7 +1166,7 @@ class InstanceWithFederationState(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: InstanceId
+    id: types.InstanceId
     domain: str
     published: datetime
     updated: datetime | None
@@ -1268,8 +1195,8 @@ class GetPost(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: PostId | None
-    comment_id: CommentId | None
+    id: types.PostId | None
+    comment_id: types.CommentId | None
 
 
 class GetPostResponse(BaseModel):
@@ -1286,12 +1213,12 @@ class EditPost(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    post_id: PostId
+    post_id: types.PostId
     name: str | None
     url: str | None
     body: str | None
     nsfw: bool | None
-    language_id: LanguageId | None
+    language_id: types.LanguageId | None
 
 
 class PostResponse(BaseModel):
@@ -1306,28 +1233,28 @@ class CreatePost(BaseModel):
         extra = Extra.forbid
 
     name: str
-    community_id: CommunityId
+    community_id: types.CommunityId
     url: str | None
     body: str | None
     honeypot: str | None
     nsfw: bool | None
-    language_id: LanguageId | None
+    language_id: types.LanguageId | None
 
 
 class GetPosts(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    type_: LISTING_TYPES | None
-    sort: SORT_TYPE_OPTIONS | None
+    type_: types.LISTING_TYPES | None
+    sort: types.SORT_TYPE_OPTIONS | None
     page: int | None
     limit: int | None
-    community_id: CommunityId | None
+    community_id: types.CommunityId | None
     community_name: str | None
     saved_only: bool | None
     liked_only: bool | None
     disliked_only: bool | None
-    page_cursor: PaginationCursor | None
+    page_cursor: types.PaginationCursor | None
 
 
 class GetPostsResponse(BaseModel):
@@ -1335,14 +1262,14 @@ class GetPostsResponse(BaseModel):
         extra = Extra.forbid
 
     posts: list[PostView]
-    next_page: PaginationCursor | None
+    next_page: types.PaginationCursor | None
 
 
 class DeletePost(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    post_id: PostId
+    post_id: types.PostId
     deleted: bool
 
 
@@ -1350,7 +1277,7 @@ class RemovePost(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    post_id: PostId
+    post_id: types.PostId
     removed: bool
     reason: str | None
 
@@ -1359,8 +1286,8 @@ class MarkPostAsRead(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    post_id: PostId | None
-    post_ids: list[PostId] | None
+    post_id: types.PostId | None
+    post_ids: list[types.PostId] | None
     read: bool
 
 
@@ -1375,7 +1302,7 @@ class LockPost(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    post_id: PostId
+    post_id: types.PostId
     locked: bool
 
 
@@ -1383,16 +1310,16 @@ class FeaturePost(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    post_id: PostId
+    post_id: types.PostId
     featured: bool
-    feature_type: POST_FEATURE_TYPES
+    feature_type: types.POST_FEATURE_TYPES
 
 
 class CreatePostLike(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    post_id: PostId
+    post_id: types.PostId
     score: int
 
 
@@ -1400,7 +1327,7 @@ class SavePost(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    post_id: PostId
+    post_id: types.PostId
     save: bool
 
 
@@ -1408,7 +1335,7 @@ class CreatePostReport(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    post_id: PostId
+    post_id: types.PostId
     reason: str
 
 
@@ -1416,15 +1343,15 @@ class PostReport(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: PostReportId
-    creator_id: PersonId
-    post_id: PostId
+    id: types.PostReportId
+    creator_id: types.PersonId
+    post_id: types.PostId
     original_post_name: str
     original_post_url: str | None
     original_post_body: str | None
     reason: str
     resolved: bool
-    resolver_id: PersonId | None
+    resolver_id: types.PersonId | None
     published: datetime
     updated: datetime | None
 
@@ -1455,7 +1382,7 @@ class ResolvePostReport(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    report_id: PostReportId
+    report_id: types.PostReportId
     resolved: bool
 
 
@@ -1466,7 +1393,7 @@ class ListPostReports(BaseModel):
     page: int | None
     limit: int | None
     unresolved_only: bool | None
-    community_id: CommunityId | None
+    community_id: types.CommunityId | None
 
 
 class ListPostReportsResponse(BaseModel):
@@ -1504,7 +1431,7 @@ class GetComment(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: CommentId
+    id: types.CommentId
 
 
 class CommentResponse(BaseModel):
@@ -1512,16 +1439,16 @@ class CommentResponse(BaseModel):
         extra = Extra.forbid
 
     comment_view: CommentView
-    recipient_ids: list[LocalUserId]
+    recipient_ids: list[types.LocalUserId]
 
 
 class EditComment(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    comment_id: CommentId
+    comment_id: types.CommentId
     content: str | None
-    language_id: LanguageId | None
+    language_id: types.LanguageId | None
 
 
 class CreateComment(BaseModel):
@@ -1529,24 +1456,24 @@ class CreateComment(BaseModel):
         extra = Extra.forbid
 
     content: str
-    post_id: PostId
-    parent_id: CommentId | None
-    language_id: LanguageId | None
+    post_id: types.PostId
+    parent_id: types.CommentId | None
+    language_id: types.LanguageId | None
 
 
 class GetComments(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    type_: LISTING_TYPES | None
-    sort: COMMENT_SORT_TYPES | None
+    type_: types.LISTING_TYPES | None
+    sort: types.COMMENT_SORT_TYPES | None
     max_depth: int | None
     page: int | None
     limit: int | None
-    community_id: CommunityId | None
+    community_id: types.CommunityId | None
     community_name: str | None
-    post_id: PostId | None
-    parent_id: CommentId | None
+    post_id: types.PostId | None
+    parent_id: types.CommentId | None
     saved_only: bool | None
     liked_only: bool | None
     disliked_only: bool | None
@@ -1563,7 +1490,7 @@ class DeleteComment(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    comment_id: CommentId
+    comment_id: types.CommentId
     deleted: bool
 
 
@@ -1571,7 +1498,7 @@ class RemoveComment(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    comment_id: CommentId
+    comment_id: types.CommentId
     removed: bool
     reason: str | None
 
@@ -1580,7 +1507,7 @@ class MarkCommentReplyAsRead(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    comment_reply_id: CommentReplyId
+    comment_reply_id: types.CommentReplyId
     read: bool
 
 
@@ -1588,9 +1515,9 @@ class CommentReply(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: CommentReplyId
-    recipient_id: PersonId
-    comment_id: CommentId
+    id: types.CommentReplyId
+    recipient_id: types.PersonId
+    comment_id: types.CommentId
     read: bool
     published: datetime
 
@@ -1609,7 +1536,7 @@ class CommentReplyView(BaseModel):
     creator_banned_from_community: bool
     creator_is_moderator: bool
     creator_is_admin: bool
-    subscribed: SUBSCRIPTION_TYPES
+    subscribed: types.SUBSCRIPTION_TYPES
     saved: bool
     creator_blocked: bool
     my_vote: int | None
@@ -1626,7 +1553,7 @@ class DistinguishComment(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    comment_id: CommentId
+    comment_id: types.CommentId
     distinguished: bool
 
 
@@ -1634,7 +1561,7 @@ class CreateCommentLike(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    comment_id: CommentId
+    comment_id: types.CommentId
     score: int
 
 
@@ -1642,7 +1569,7 @@ class SaveComment(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    comment_id: CommentId
+    comment_id: types.CommentId
     save: bool
 
 
@@ -1650,7 +1577,7 @@ class CreateCommentReport(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    comment_id: CommentId
+    comment_id: types.CommentId
     reason: str
 
 
@@ -1658,13 +1585,13 @@ class CommentReport(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: CommentReportId
-    creator_id: PersonId
-    comment_id: CommentId
+    id: types.CommentReportId
+    creator_id: types.PersonId
+    comment_id: types.CommentId
     original_comment_text: str
     reason: str
     resolved: bool
-    resolver_id: PersonId | None
+    resolver_id: types.PersonId | None
     published: datetime
     updated: datetime | None
 
@@ -1696,7 +1623,7 @@ class ResolveCommentReport(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    report_id: CommentReportId
+    report_id: types.CommentReportId
     resolved: bool
 
 
@@ -1707,7 +1634,7 @@ class ListCommentReports(BaseModel):
     page: int | None
     limit: int | None
     unresolved_only: bool | None
-    community_id: CommunityId | None
+    community_id: types.CommunityId | None
 
 
 class ListCommentReportsResponse(BaseModel):
@@ -1721,7 +1648,7 @@ class EditPrivateMessage(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    private_message_id: PrivateMessageId
+    private_message_id: types.PrivateMessageId
     content: str
 
 
@@ -1729,9 +1656,9 @@ class PrivateMessage(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: PrivateMessageId
-    creator_id: PersonId
-    recipient_id: PersonId
+    id: types.PrivateMessageId
+    creator_id: types.PersonId
+    recipient_id: types.PersonId
     content: str
     deleted: bool
     read: bool
@@ -1762,7 +1689,7 @@ class CreatePrivateMessage(BaseModel):
         extra = Extra.forbid
 
     content: str
-    recipient_id: PersonId
+    recipient_id: types.PersonId
 
 
 class GetPrivateMessages(BaseModel):
@@ -1772,7 +1699,7 @@ class GetPrivateMessages(BaseModel):
     unread_only: bool | None
     page: int | None
     limit: int | None
-    creator_id: PersonId | None
+    creator_id: types.PersonId | None
 
 
 class PrivateMessagesResponse(BaseModel):
@@ -1786,7 +1713,7 @@ class DeletePrivateMessage(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    private_message_id: PrivateMessageId
+    private_message_id: types.PrivateMessageId
     deleted: bool
 
 
@@ -1794,7 +1721,7 @@ class MarkPrivateMessageAsRead(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    private_message_id: PrivateMessageId
+    private_message_id: types.PrivateMessageId
     read: bool
 
 
@@ -1802,7 +1729,7 @@ class CreatePrivateMessageReport(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    private_message_id: PrivateMessageId
+    private_message_id: types.PrivateMessageId
     reason: str
 
 
@@ -1810,13 +1737,13 @@ class PrivateMessageReport(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: PrivateMessageReportId
-    creator_id: PersonId
-    private_message_id: PrivateMessageId
+    id: types.PrivateMessageReportId
+    creator_id: types.PersonId
+    private_message_id: types.PrivateMessageId
     original_pm_text: str
     reason: str
     resolved: bool
-    resolver_id: PersonId | None
+    resolver_id: types.PersonId | None
     published: datetime
     updated: datetime | None
 
@@ -1843,7 +1770,7 @@ class ResolvePrivateMessageReport(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    report_id: PrivateMessageReportId
+    report_id: types.PrivateMessageReportId
     resolved: bool
 
 
@@ -1867,12 +1794,12 @@ class GetPersonDetails(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    person_id: PersonId | None
+    person_id: types.PersonId | None
     username: str | None
-    sort: SORT_TYPE_OPTIONS | None
+    sort: types.SORT_TYPE_OPTIONS | None
     page: int | None
     limit: int | None
-    community_id: CommunityId | None
+    community_id: types.CommunityId | None
     saved_only: bool | None
 
 
@@ -1930,7 +1857,7 @@ class GetPersonMentions(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    sort: COMMENT_SORT_TYPES | None
+    sort: types.COMMENT_SORT_TYPES | None
     page: int | None
     limit: int | None
     unread_only: bool | None
@@ -1940,9 +1867,9 @@ class PersonMention(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: PersonMentionId
-    recipient_id: PersonId
-    comment_id: CommentId
+    id: types.PersonMentionId
+    recipient_id: types.PersonId
+    comment_id: types.CommentId
     read: bool
     published: datetime
 
@@ -1961,7 +1888,7 @@ class PersonMentionView(BaseModel):
     creator_banned_from_community: bool
     creator_is_moderator: bool
     creator_is_admin: bool
-    subscribed: SUBSCRIPTION_TYPES
+    subscribed: types.SUBSCRIPTION_TYPES
     saved: bool
     creator_blocked: bool
     my_vote: int | None
@@ -1978,7 +1905,7 @@ class MarkPersonMentionAsRead(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    person_mention_id: PersonMentionId
+    person_mention_id: types.PersonMentionId
     read: bool
 
 
@@ -1993,7 +1920,7 @@ class GetReplies(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    sort: COMMENT_SORT_TYPES | None
+    sort: types.COMMENT_SORT_TYPES | None
     page: int | None
     limit: int | None
     unread_only: bool | None
@@ -2010,7 +1937,7 @@ class BanPerson(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    person_id: PersonId
+    person_id: types.PersonId
     ban: bool
     remove_data: bool | None
     reason: str | None
@@ -2036,7 +1963,7 @@ class BlockPerson(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    person_id: PersonId
+    person_id: types.PersonId
     block: bool
 
 
@@ -2090,8 +2017,8 @@ class SaveUserSettings(BaseModel):
     auto_expand: bool | None
     show_scores: bool | None
     theme: str | None
-    default_sort_type: SORT_TYPE_OPTIONS | None
-    default_listing_type: LISTING_TYPES | None
+    default_sort_type: types.SORT_TYPE_OPTIONS | None
+    default_listing_type: types.LISTING_TYPES | None
     interface_language: str | None
     avatar: str | None
     banner: str | None
@@ -2104,10 +2031,10 @@ class SaveUserSettings(BaseModel):
     bot_account: bool | None
     show_bot_accounts: bool | None
     show_read_posts: bool | None
-    discussion_languages: list[LanguageId] | None
+    discussion_languages: list[types.LanguageId] | None
     open_links_in_new_tab: bool | None
     infinite_scroll_enabled: bool | None
-    post_listing_mode: POST_LISTING_MODE_OPTIONS | None
+    post_listing_mode: types.POST_LISTING_MODE_OPTIONS | None
     enable_keyboard_navigation: bool | None
     enable_animated_images: bool | None
     collapse_bot_comments: bool | None
@@ -2126,14 +2053,14 @@ class GetReportCount(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    community_id: CommunityId | None
+    community_id: types.CommunityId | None
 
 
 class GetReportCountResponse(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    community_id: CommunityId | None
+    community_id: types.CommunityId | None
     comment_reports: int
     post_reports: int
     private_message_reports: int | None
@@ -2159,7 +2086,7 @@ class AddAdmin(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    person_id: PersonId
+    person_id: types.PersonId
     added: bool
 
 
@@ -2191,9 +2118,9 @@ class RegistrationApplication(BaseModel):
         extra = Extra.forbid
 
     id: int
-    local_user_id: LocalUserId
+    local_user_id: types.LocalUserId
     answer: str
-    admin_id: PersonId | None
+    admin_id: types.PersonId | None
     deny_reason: str | None
     published: datetime
 
@@ -2228,7 +2155,7 @@ class PurgePerson(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    person_id: PersonId
+    person_id: types.PersonId
     reason: str | None
 
 
@@ -2236,7 +2163,7 @@ class PurgeCommunity(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    community_id: CommunityId
+    community_id: types.CommunityId
     reason: str | None
 
 
@@ -2244,7 +2171,7 @@ class PurgePost(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    post_id: PostId
+    post_id: types.PostId
     reason: str | None
 
 
@@ -2252,7 +2179,7 @@ class PurgeComment(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    comment_id: CommentId
+    comment_id: types.CommentId
     reason: str | None
 
 
@@ -2260,7 +2187,7 @@ class EditCustomEmoji(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: CustomEmojiId
+    id: types.CustomEmojiId
     category: str
     image_url: str
     alt_text: str
@@ -2289,14 +2216,14 @@ class DeleteCustomEmoji(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    id: CustomEmojiId
+    id: types.CustomEmojiId
 
 
 class BlockInstance(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    instance_id: InstanceId
+    instance_id: types.InstanceId
     block: bool
 
 
@@ -2333,7 +2260,7 @@ class LoginToken(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    user_id: LocalUserId
+    user_id: types.LocalUserId
     published: datetime
     ip: str | None
     user_agent: str | None
@@ -2343,7 +2270,7 @@ class ListPostLikes(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    post_id: PostId
+    post_id: types.PostId
     page: int | None
     limit: int | None
 
@@ -2367,7 +2294,7 @@ class ListCommentLikes(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    comment_id: CommentId
+    comment_id: types.CommentId
     page: int | None
     limit: int | None
 
