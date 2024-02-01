@@ -342,6 +342,8 @@ urlpatterns = [
     path("actor/inbox/", activitypub.Inbox.as_view()),
     path("actor/outbox/", activitypub.EmptyOutbox.as_view()),
     path("inbox/", activitypub.Inbox.as_view(), name="shared_inbox"),
+    # Lemmy API
+    path("api/v3/", include("lemmy.urls")),
     # API/Oauth
     path("api/", include("api.urls")),
     path("oauth/authorize", oauth.AuthorizationView.as_view()),
