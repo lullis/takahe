@@ -15,7 +15,7 @@ x-takahe-common:
       TAKAHE_DATABASE_SERVER: "postgres://postgres:insecure_password@db/takahe"
       TAKAHE_DEBUG: "true"
       TAKAHE_SECRET_KEY: "insecure_secret"
-      TAKAHE_CSRF_HOSTS: '["http://127.0.0.1:8000", "https://127.0.0.1:8000"]'
+      TAKAHE_CSRF_HOSTS: '["http://127.0.0.1:8888", "https://127.0.0.1:8888"]'
       TAKAHE_USE_PROXY_HEADERS: "true"
       TAKAHE_EMAIL_BACKEND: "console://console"
       TAKAHE_MAIN_DOMAIN: "example.com"
@@ -44,18 +44,15 @@ services:
       POSTGRES_DB: takahe
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: insecure_password
-    ports:
-      - "5433:5432"
 
   web:
     <<: *takahe-common
+    command: "uvicorn takahe.asgi:application --port 80 --host 0.0.0.0"
     healthcheck:
-      test: ["CMD", "nc", "-z", "-v", "localhost", "8000"]
+      test: ["CMD", "nc", "-z", "-v", "localhost", "80"]
       interval: 20s
       timeout: 60s
       start_period: 15s
-    ports:
-      - "8000:8000"
     depends_on:
       setup:
         condition: service_completed_successfully
