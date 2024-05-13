@@ -4,8 +4,14 @@
 {% block subtitle %}Users{% endblock %}
 
 {% block settings_content %}
+
+    <div class="view-options">
+        <span class="spacer"></span>
+        <a href="{% url "admin_users_create" %}" class="button"><i class="fa-solid fa-plus"></i> Add User</a>
+    </div>
+
     <form action="." class="search">
-        <input type="search" name="query" value="{{ query }}" placeholder="Search by email">
+        <input type="search" name="query" value="{{ query }}" placeholder="Search by emailers">
         <button><i class="fa-solid fa-search"></i></button>
     </form>
     <table class="items">

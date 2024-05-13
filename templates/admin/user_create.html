@@ -1,0 +1,22 @@
+{% extends "admin/base_main.html" %}
+
+{% block subtitle %}{{ editing_user.email }}{% endblock %}
+
+{% block settings_content %}
+  <h1>Create New User</h1>
+  <p>Use this form to create users who will be automatically validated</p>
+  <form action="{% url 'admin_users_create' %}" method="POST">
+    {% csrf_token %}
+    <fieldset>
+      <legend>User Details</legend>
+      {% include "forms/_field.html" with field=form.email_address %}
+      {% include "forms/_field.html" with field=form.initial_password %}
+      {% include "forms/_field.html" with field=form.username %}
+      {% include "forms/_field.html" with field=form.domain %}
+    </fieldset>
+    <div class="buttons">
+      <a href="{{ editing_user.urls.admin }}?page={{ page }}" class="button secondary left">Back</a>
+      <button>Save</button>
+    </div>
+  </form>
+{% endblock %}

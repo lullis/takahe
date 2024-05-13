@@ -159,6 +159,11 @@ urlpatterns = [
         name="admin_users",
     ),
     path(
+        "admin/users/new",
+        admin.UserCreate.as_view(),
+        name="admin_users_create",
+    ),
+    path(
         "admin/users/<id>/",
         admin.UserEdit.as_view(),
         name="admin_user_edit",

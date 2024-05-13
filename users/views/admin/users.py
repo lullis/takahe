@@ -1,11 +1,15 @@
 from django import forms
-from django.db import models
+from django.contrib.auth.password_validation import validate_password
+from django.db import models, transaction
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import FormView, ListView
 
 from users.decorators import admin_required
-from users.models import User
+from users.models import Domain, User
+from users.services import IdentityService
+
+from .domains import DomainValidator
 
 
 @method_decorator(admin_required, name="dispatch")
@@ -28,6 +32,65 @@ class UsersRoot(ListView):
         if self.query:
             users = users.filter(email__icontains=self.query)
         return users
+
+
+@method_decorator(admin_required, name="dispatch")
+class UserCreate(FormView):
+    template_name = "admin/user_create.html"
+    extra_context = {"section": "users"}
+
+    class form_class(forms.Form):
+        email_address = forms.EmailField()
+        initial_password = forms.CharField(required=False, widget=forms.PasswordInput)
+        username = forms.CharField(help_text="Your handle at the desired domain")
+        domain = forms.CharField(
+            help_text="Domain owned by the user",
+            validators=[DomainValidator],
+        )
+
+        def clean_email_address(self):
+            if User.objects.filter(email=self.cleaned_data["email_address"]).exists():
+                raise forms.ValidationError("This user is already registered")
+            return self.cleaned_data["email_address"]
+
+        def clean_initial_password(self):
+            password = self.cleaned_data["initial_password"]
+            if password:
+                validate_password(password)
+            return password
+
+        def clean_domain(self):
+            if not self.cleaned_data["domain"]:
+                return None
+
+            if Domain.objects.filter(domain=self.cleaned_data["domain"]).exists():
+                raise forms.ValidationError("Domain name is already registered")
+
+            return self.cleaned_data["domain"]
+
+    @transaction.atomic()
+    def form_valid(self, form):
+        user = User.objects.create_user(
+            email=form.cleaned_data["email_address"],
+            password=form.cleaned_data["initial_password"],
+        )
+        domain = Domain.objects.create(
+            domain=form.cleaned_data["domain"],
+            service_domain=None,
+            public=False,
+            default=False,
+            local=True,
+        )
+        domain.users.add(user)
+        username = form.cleaned_data["username"]
+        IdentityService.create(
+            user=user,
+            username=username,
+            domain=domain,
+            name=f"{username}@{domain.domain}",
+            discoverable=True,
+        )
+        return redirect(User.urls.admin)
 
 
 @method_decorator(admin_required, name="dispatch")

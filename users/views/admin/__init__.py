@@ -38,7 +38,7 @@ from users.views.admin.settings import (  # noqa
     TuningSettings,
 )
 from users.views.admin.stator import Stator  # noqa
-from users.views.admin.users import UserEdit, UsersRoot  # noqa
+from users.views.admin.users import UserCreate, UserEdit, UsersRoot  # noqa
 
 
 @method_decorator(admin_required, name="dispatch")
