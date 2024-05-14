@@ -87,7 +87,7 @@ class UserCreate(FormView):
             user=user,
             username=username,
             domain=domain,
-            name=f"{username}@{domain.domain}",
+            name=username,
             discoverable=True,
         )
         return redirect(User.urls.admin)

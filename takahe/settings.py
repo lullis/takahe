@@ -217,6 +217,8 @@ INSTALLED_APPS = [
     "mediaproxy",
     "stator",
     "users",
+    "rest_framework",
+    "rest_framework.authtoken",
 ]
 
 MIDDLEWARE = [
@@ -274,6 +276,13 @@ else:
             "PASSWORD": SETUP.PGPASSWORD,
         }
     }
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.BasicAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ]
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {

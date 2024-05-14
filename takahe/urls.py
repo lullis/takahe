@@ -261,6 +261,7 @@ urlpatterns = [
         admin.Stator.as_view(),
         name="admin_stator",
     ),
+    path("admin/api/", include("admin.urls")),
     # Identity views
     path("@<handle>/", identity.ViewIdentity.as_view()),
     path("@<handle>/replies/", identity.ViewIdentity.as_view(with_replies=True)),
