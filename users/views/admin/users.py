@@ -43,8 +43,13 @@ class UserCreate(FormView):
         email_address = forms.EmailField()
         initial_password = forms.CharField(required=False, widget=forms.PasswordInput)
         username = forms.CharField(help_text="Your handle at the desired domain")
-        domain = forms.CharField(
-            help_text="Domain owned by the user",
+        identity_domain = forms.CharField(
+            help_text="Identity domain, used by webfinger queries, Owned by the user",
+            validators=[DomainValidator],
+        )
+
+        service_domain = forms.CharField(
+            help_text="Service domain, will point to this takahe instance. Owned by the user",
             validators=[DomainValidator],
         )
 
@@ -59,14 +64,19 @@ class UserCreate(FormView):
                 validate_password(password)
             return password
 
-        def clean_domain(self):
-            if not self.cleaned_data["domain"]:
-                return None
-
-            if Domain.objects.filter(domain=self.cleaned_data["domain"]).exists():
+        def clean_identity_domain(self):
+            domain_name = self.cleaned_data["identity_domain"]
+            if Domain.objects.filter(domain=domain_name).exists():
                 raise forms.ValidationError("Domain name is already registered")
 
-            return self.cleaned_data["domain"]
+            return domain_name
+
+        def clean_service_domain(self):
+            domain_name = self.cleaned_data["service_domain"]
+            if Domain.objects.filter(service_domain=domain_name).exists():
+                raise forms.ValidationError("Domain name is already registered")
+
+            return domain_name
 
     @transaction.atomic()
     def form_valid(self, form):
@@ -75,8 +85,8 @@ class UserCreate(FormView):
             password=form.cleaned_data["initial_password"],
         )
         domain = Domain.objects.create(
-            domain=form.cleaned_data["domain"],
-            service_domain=None,
+            domain=form.cleaned_data["identity_domain"],
+            service_domain=form.cleaned_data["service_domain"],
             public=False,
             default=False,
             local=True,

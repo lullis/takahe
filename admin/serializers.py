@@ -12,7 +12,12 @@ class IdentityCreateSerializer(serializers.ModelSerializer):
     email_address = serializers.EmailField(write_only=True)
     initial_password = serializers.CharField(write_only=True)
     username = serializers.CharField(write_only=True)
-    domain = serializers.CharField(validators=[DomainValidator], write_only=True)
+    identity_domain = serializers.CharField(
+        validators=[DomainValidator], write_only=True
+    )
+    service_domain = serializers.CharField(
+        validators=[DomainValidator], write_only=True
+    )
 
     def validate_email_address(self, value):
         if User.objects.filter(email=value).exists():
@@ -24,11 +29,14 @@ class IdentityCreateSerializer(serializers.ModelSerializer):
             validate_password(value)
         return value
 
-    def validate_domain(self, value):
-        if not value:
-            return None
-
+    def validate_identity_domain(self, value):
         if Domain.objects.filter(domain=value).exists():
+            raise serializers.ValidationError("Domain name is already registered")
+
+        return value
+
+    def validate_service_domain(self, value):
+        if Domain.objects.filter(service_domain=value).exists():
             raise serializers.ValidationError("Domain name is already registered")
 
         return value
@@ -39,8 +47,8 @@ class IdentityCreateSerializer(serializers.ModelSerializer):
             password=validated_data["initial_password"],
         )
         domain = Domain.objects.create(
-            domain=validated_data["domain"],
-            service_domain=None,
+            domain=validated_data["identity_domain"],
+            service_domain=validated_data["service_domain"],
             public=False,
             default=False,
             local=True,
@@ -63,6 +71,7 @@ class IdentityCreateSerializer(serializers.ModelSerializer):
             "email_address",
             "initial_password",
             "username",
-            "domain",
+            "identity_domain",
+            "service_domain",
         )
         read_only_fields = ("id", "actor_uri")

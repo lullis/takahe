@@ -12,7 +12,8 @@
       {% include "forms/_field.html" with field=form.email_address %}
       {% include "forms/_field.html" with field=form.initial_password %}
       {% include "forms/_field.html" with field=form.username %}
-      {% include "forms/_field.html" with field=form.domain %}
+      {% include "forms/_field.html" with field=form.identity_domain %}
+      {% include "forms/_field.html" with field=form.service_domain %}
     </fieldset>
     <div class="buttons">
       <a href="{{ editing_user.urls.admin }}?page={{ page }}" class="button secondary left">Back</a>
